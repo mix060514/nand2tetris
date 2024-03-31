@@ -1,0 +1,48 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/PC.hdl
+
+/**
+ * A 16-bit counter with load and reset control bits.
+ * if      (reset[t] == 1) out[t+1] = 0
+ * else if (load[t] == 1)  out[t+1] = in[t]
+ * else if (inc[t] == 1)   out[t+1] = out[t] + 1  (integer addition)
+ * else                    out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16],load,inc,reset;
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    Or(a=reset, b=load, out=Or1);
+    Or(a=Or1, b=inc, out=FinalLoad);
+
+    Mux16(a=in, b=false, sel=reset, out=FinalMux
+         , out[0] =FinalMux[0]
+         
+         );
+
+    Register(in=FinalMux[0], load=FinalLoad, out=outtmp[1]);
+    Register(in=FinalMux[1], load=FinalLoad, out=outtmp[1]);
+    Register(in=FinalMux[2], load=FinalLoad, out=outtmp[2]);
+    Register(in=FinalMux[3], load=FinalLoad, out=outtmp[3]);
+    Register(in=FinalMux[4], load=FinalLoad, out=outtmp[4]);
+    Register(in=FinalMux[5], load=FinalLoad, out=outtmp[5]);
+    Register(in=FinalMux[6], load=FinalLoad, out=outtmp[6]);
+    Register(in=FinalMux[7], load=FinalLoad, out=outtmp[7]);
+    Register(in=FinalMux[8], load=FinalLoad, out=outtmp[8]);
+    Register(in=FinalMux[9], load=FinalLoad, out=outtmp[9]);
+    Register(in=FinalMux[10], load=FinalLoad, out=outtmp[10]);
+    Register(in=FinalMux[11], load=FinalLoad, out=outtmp[11]);
+    Register(in=FinalMux[12], load=FinalLoad, out=outtmp[12]);
+    Register(in=FinalMux[13], load=FinalLoad, out=outtmp[13]);
+    Register(in=FinalMux[14], load=FinalLoad, out=outtmp[14]);
+    Register(in=FinalMux[15], load=FinalLoad, out=outtmp[15]);
+
+    Inc16(in=outtmp, out=Incout);
+    Mux16(a=outtmp, b=Incout, sel=inc, out=out);
+
+}
