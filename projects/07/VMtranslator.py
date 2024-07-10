@@ -192,6 +192,7 @@ class CodeWriter():
                 self.lines.append(f'@{key}')
                 self.lines.append('M=M+D')
                 # addr[LCL]
+                self.lines.append('A=M')
                 self.lines.append('D=M')
                 # addr[SP] <- addr[LCL]
                 self.lines.append('@SP')
@@ -241,6 +242,27 @@ class CodeWriter():
                 self.lines.append('M=D')
                 self.lines.append('@SP')
                 self.lines.append('M=M+1')
+        elif segment == 'pointer':
+            if index == 0:
+                key = 'THIS'
+            elif index == 1:
+                key = 'THAT'
+            if command == CommandType.C_POP:
+                self.lines.append('@SP')
+                self.lines.append('A=M-1')
+                self.lines.append('D=M')
+                self.lines.append(f'@{key}')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+            if command == CommandType.C_PUSH:
+                self.lines.append(f'@{key}')
+                self.lines.append('D=M')
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
 
     def close(self):
         print()
@@ -278,7 +300,8 @@ if __name__ == '__main__':
     # fp = 'projects/07/StackArithmetic/SimpleAdd/SimpleAdd.vm'
     # fp = 'projects/07/StackArithmetic/StackTest/StackTest.vm'
     # fp = 'projects/07/MemoryAccess/StaticTest/StaticTest.vm'
-    fp = 'projects/07/MemoryAccess/BasicTest/BasicTest.vm'
+    # fp = 'projects/07/MemoryAccess/BasicTest/BasicTest.vm'
+    fp = 'projects/07/MemoryAccess/PointerTest/PointerTest.vm'
     Main(fp)
     # p = Parser(fp)
     # print(p.lines)
