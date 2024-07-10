@@ -144,9 +144,9 @@ class CodeWriter():
             self.cnt += 1
 
     def writePushPop(self, command: str, segment: str, index: int):
-        if command == CommandType.C_PUSH:
-            if segment == 'constant':
-                self.lines.append(f'// {command} {segment} {index}')
+        self.lines.append(f'// {command} {segment} {index}')
+        if segment == 'constant':
+            if command == CommandType.C_PUSH:
                 self.lines.append(f'@{index}')
                 self.lines.append('D=A')
                 self.lines.append('@SP')
@@ -154,6 +154,46 @@ class CodeWriter():
                 self.lines.append('M=D')
                 self.lines.append('@SP')
                 self.lines.append('M=M+1')
+        if segment == 'local':
+            if command == CommandType.C_POP:
+                # LCL = LCL + i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append('@LCL')
+                self.lines.append('M=M+D')
+                # SP--
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+                # addr[SP]
+                self.lines.append('D=M')
+                # addr[LCL] <- addr[SP]
+                self.lines.append('@LCL')
+                self.lines.append('M=D')
+                # LCL = LCL - i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append('@LCL')
+                self.lines.append('M=M-D')
+            if command == CommandType.C_PUSH:
+                # LCL = LCL + i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append('@LCL')
+                self.lines.append('M=M+D')
+                # addr[LCL]
+                self.lines.append('D=M')
+                # addr[SP] <- addr[LCL]
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                # SP++
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
+                # LCL = LCL - i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append('@LCL')
+                self.lines.append('M=M-D')
 
     def close(self):
         print()
