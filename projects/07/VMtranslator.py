@@ -85,7 +85,8 @@ class Parser():
 
 class CodeWriter():
     def __init__(self, fp):
-        self.fp = fp.split('/')[-1].split('\\')[-1].split('.')[0] + '.asm'
+        self.fn = fp.split('/')[-1].split('\\')[-1].split('.')[0]
+        self.fp = self.fn + '.asm'
         self.lines = []
         self.cnt = 0
 
@@ -154,7 +155,7 @@ class CodeWriter():
                 self.lines.append('M=D')
                 self.lines.append('@SP')
                 self.lines.append('M=M+1')
-        if segment in ['local', 'argument', 'this', 'that']:
+        elif segment in ['local', 'argument', 'this', 'that']:
             if segment == 'local':
                 key = 'LCL'
             elif segment == 'argument':
@@ -163,7 +164,6 @@ class CodeWriter():
                 key = 'THIS'
             elif segment == 'that':
                 key = 'THAT'
-
             if command == CommandType.C_POP:
                 # LCL = LCL + i
                 self.lines.append(f'@{index}')
@@ -183,7 +183,6 @@ class CodeWriter():
                 self.lines.append('D=A')
                 self.lines.append(f'@{key}')
                 self.lines.append('M=M-D')
-
             if command == CommandType.C_PUSH:
                 # LCL = LCL + i
                 self.lines.append(f'@{index}')
@@ -204,6 +203,23 @@ class CodeWriter():
                 self.lines.append('D=A')
                 self.lines.append(f'@{key}')
                 self.lines.append('M=M-D')
+        elif segment == 'static':
+            if command == CommandType.C_POP:
+                self.lines.append('@SP')
+                self.lines.append('A=M-1')
+                self.lines.append('D=M')
+                self.lines.append(f'@{self.fn}.{index}')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+            if command == CommandType.C_PUSH:
+                self.lines.append(f'@{self.fn}.{index}')
+                self.lines.append('D=M')
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
 
     def close(self):
         print()
@@ -238,6 +254,7 @@ class Main():
 if __name__ == '__main__':
     # fp = 'projects/07/StackArithmetic/SimpleAdd/SimpleAdd.vm'
     fp = 'projects/07/StackArithmetic/StackTest/StackTest.vm'
+    fp = 'projects/07/MemoryAccess/StaticTest/StaticTest.vm'
     Main(fp)
     # p = Parser(fp)
     # print(p.lines)
