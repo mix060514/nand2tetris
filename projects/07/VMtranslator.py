@@ -154,12 +154,21 @@ class CodeWriter():
                 self.lines.append('M=D')
                 self.lines.append('@SP')
                 self.lines.append('M=M+1')
-        if segment == 'local':
+        if segment in ['local', 'argument', 'this', 'that']:
+            if segment == 'local':
+                key = 'LCL'
+            elif segment == 'argument':
+                key = 'ARG'
+            elif segment == 'this':
+                key = 'THIS'
+            elif segment == 'that':
+                key = 'THAT'
+
             if command == CommandType.C_POP:
                 # LCL = LCL + i
                 self.lines.append(f'@{index}')
                 self.lines.append('D=A')
-                self.lines.append('@LCL')
+                self.lines.append(f'@{key}')
                 self.lines.append('M=M+D')
                 # SP--
                 self.lines.append('@SP')
@@ -167,18 +176,19 @@ class CodeWriter():
                 # addr[SP]
                 self.lines.append('D=M')
                 # addr[LCL] <- addr[SP]
-                self.lines.append('@LCL')
+                self.lines.append(f'@{key}')
                 self.lines.append('M=D')
                 # LCL = LCL - i
                 self.lines.append(f'@{index}')
                 self.lines.append('D=A')
-                self.lines.append('@LCL')
+                self.lines.append(f'@{key}')
                 self.lines.append('M=M-D')
+
             if command == CommandType.C_PUSH:
                 # LCL = LCL + i
                 self.lines.append(f'@{index}')
                 self.lines.append('D=A')
-                self.lines.append('@LCL')
+                self.lines.append(f'@{key}')
                 self.lines.append('M=M+D')
                 # addr[LCL]
                 self.lines.append('D=M')
@@ -192,7 +202,7 @@ class CodeWriter():
                 # LCL = LCL - i
                 self.lines.append(f'@{index}')
                 self.lines.append('D=A')
-                self.lines.append('@LCL')
+                self.lines.append(f'@{key}')
                 self.lines.append('M=M-D')
 
     def close(self):
