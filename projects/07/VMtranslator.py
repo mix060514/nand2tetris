@@ -65,7 +65,7 @@ class Parser():
         if command_type == 'call':
             return CommandType.C_CALL
         if command_type == 'return':
-            return CommandType.C_FUNCTION
+            return CommandType.C_RETURN
         raise ValueError()
 
 
