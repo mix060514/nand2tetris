@@ -174,9 +174,11 @@ class CodeWriter():
                 self.lines.append('@SP')
                 self.lines.append('M=M-1')
                 # addr[SP]
+                self.lines.append('A=M')
                 self.lines.append('D=M')
                 # addr[LCL] <- addr[SP]
                 self.lines.append(f'@{key}')
+                self.lines.append('A=M')
                 self.lines.append('M=D')
                 # LCL = LCL - i
                 self.lines.append(f'@{index}')
@@ -220,6 +222,25 @@ class CodeWriter():
                 self.lines.append('M=D')
                 self.lines.append('@SP')
                 self.lines.append('M=M+1')
+        elif segment == 'temp':
+            if index > 7 or index < 0:
+                raise ValueError()
+            if command == CommandType.C_POP:
+                self.lines.append('@SP')
+                self.lines.append('A=M-1')
+                self.lines.append('D=M')
+                self.lines.append(f'@{index+5}')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+            if command == CommandType.C_PUSH:
+                self.lines.append(f'@{index+5}')
+                self.lines.append('D=M')
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
 
     def close(self):
         print()
@@ -227,6 +248,8 @@ class CodeWriter():
         print(self.fp)
         print()
         print('\n'.join(self.lines))
+        with open(self.fp, 'wt') as f:
+            f.write('\n'.join(self.lines))
 
 class Main():
     def __init__(self, fp):
@@ -253,8 +276,9 @@ class Main():
 
 if __name__ == '__main__':
     # fp = 'projects/07/StackArithmetic/SimpleAdd/SimpleAdd.vm'
-    fp = 'projects/07/StackArithmetic/StackTest/StackTest.vm'
-    fp = 'projects/07/MemoryAccess/StaticTest/StaticTest.vm'
+    # fp = 'projects/07/StackArithmetic/StackTest/StackTest.vm'
+    # fp = 'projects/07/MemoryAccess/StaticTest/StaticTest.vm'
+    fp = 'projects/07/MemoryAccess/BasicTest/BasicTest.vm'
     Main(fp)
     # p = Parser(fp)
     # print(p.lines)
