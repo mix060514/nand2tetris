@@ -265,13 +265,14 @@ class CodeWriter():
                 self.lines.append('M=M+1')
 
     def close(self):
+        self.lines.append('')
         print()
         print()
-        print(self.fp)
         print()
         print('\n'.join(self.lines))
         with open(self.fp, 'wt') as f:
             f.write('\n'.join(self.lines))
+        print('---->', self.fp)
 
 class Main():
     def __init__(self, fp):
@@ -302,6 +303,8 @@ if __name__ == '__main__':
     # fp = 'projects/07/MemoryAccess/StaticTest/StaticTest.vm'
     # fp = 'projects/07/MemoryAccess/BasicTest/BasicTest.vm'
     fp = 'projects/07/MemoryAccess/PointerTest/PointerTest.vm'
+    import sys
+    fp = sys.argv[1]
     Main(fp)
     # p = Parser(fp)
     # print(p.lines)
