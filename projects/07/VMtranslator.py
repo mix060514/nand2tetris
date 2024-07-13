@@ -65,7 +65,7 @@ class Parser():
         if command_type == 'call':
             return CommandType.C_CALL
         if command_type == 'return':
-            return CommandType.C_FUNCTION
+            return CommandType.C_RETURN
         raise ValueError()
 
 
@@ -85,7 +85,8 @@ class Parser():
 
 class CodeWriter():
     def __init__(self, fp):
-        self.fp = fp.split('/')[-1].split('\\')[-1].split('.')[0] + '.asm'
+        self.fn = fp.split('/')[-1].split('\\')[-1].split('.')[0]
+        self.fp = self.fn + '.asm'
         self.lines = []
         self.cnt = 0
 
@@ -144,9 +145,9 @@ class CodeWriter():
             self.cnt += 1
 
     def writePushPop(self, command: str, segment: str, index: int):
-        if command == CommandType.C_PUSH:
-            if segment == 'constant':
-                self.lines.append(f'// {command} {segment} {index}')
+        self.lines.append(f'// {command} {segment} {index}')
+        if segment == 'constant':
+            if command == CommandType.C_PUSH:
                 self.lines.append(f'@{index}')
                 self.lines.append('D=A')
                 self.lines.append('@SP')
@@ -154,13 +155,124 @@ class CodeWriter():
                 self.lines.append('M=D')
                 self.lines.append('@SP')
                 self.lines.append('M=M+1')
+        elif segment in ['local', 'argument', 'this', 'that']:
+            if segment == 'local':
+                key = 'LCL'
+            elif segment == 'argument':
+                key = 'ARG'
+            elif segment == 'this':
+                key = 'THIS'
+            elif segment == 'that':
+                key = 'THAT'
+            if command == CommandType.C_POP:
+                # LCL = LCL + i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append(f'@{key}')
+                self.lines.append('M=M+D')
+                # SP--
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+                # addr[SP]
+                self.lines.append('A=M')
+                self.lines.append('D=M')
+                # addr[LCL] <- addr[SP]
+                self.lines.append(f'@{key}')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                # LCL = LCL - i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append(f'@{key}')
+                self.lines.append('M=M-D')
+            if command == CommandType.C_PUSH:
+                # LCL = LCL + i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append(f'@{key}')
+                self.lines.append('M=M+D')
+                # addr[LCL]
+                self.lines.append('A=M')
+                self.lines.append('D=M')
+                # addr[SP] <- addr[LCL]
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                # SP++
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
+                # LCL = LCL - i
+                self.lines.append(f'@{index}')
+                self.lines.append('D=A')
+                self.lines.append(f'@{key}')
+                self.lines.append('M=M-D')
+        elif segment == 'static':
+            if command == CommandType.C_POP:
+                self.lines.append('@SP')
+                self.lines.append('A=M-1')
+                self.lines.append('D=M')
+                self.lines.append(f'@{self.fn}.{index}')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+            if command == CommandType.C_PUSH:
+                self.lines.append(f'@{self.fn}.{index}')
+                self.lines.append('D=M')
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
+        elif segment == 'temp':
+            if index > 7 or index < 0:
+                raise ValueError()
+            if command == CommandType.C_POP:
+                self.lines.append('@SP')
+                self.lines.append('A=M-1')
+                self.lines.append('D=M')
+                self.lines.append(f'@{index+5}')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+            if command == CommandType.C_PUSH:
+                self.lines.append(f'@{index+5}')
+                self.lines.append('D=M')
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
+        elif segment == 'pointer':
+            if index == 0:
+                key = 'THIS'
+            elif index == 1:
+                key = 'THAT'
+            if command == CommandType.C_POP:
+                self.lines.append('@SP')
+                self.lines.append('A=M-1')
+                self.lines.append('D=M')
+                self.lines.append(f'@{key}')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M-1')
+            if command == CommandType.C_PUSH:
+                self.lines.append(f'@{key}')
+                self.lines.append('D=M')
+                self.lines.append('@SP')
+                self.lines.append('A=M')
+                self.lines.append('M=D')
+                self.lines.append('@SP')
+                self.lines.append('M=M+1')
 
     def close(self):
+        self.lines.append('')
         print()
         print()
-        print(self.fp)
         print()
         print('\n'.join(self.lines))
+        with open(self.fp, 'wt') as f:
+            f.write('\n'.join(self.lines))
+        print('---->', self.fp)
 
 class Main():
     def __init__(self, fp):
@@ -187,7 +299,12 @@ class Main():
 
 if __name__ == '__main__':
     # fp = 'projects/07/StackArithmetic/SimpleAdd/SimpleAdd.vm'
-    fp = 'projects/07/StackArithmetic/StackTest/StackTest.vm'
+    # fp = 'projects/07/StackArithmetic/StackTest/StackTest.vm'
+    # fp = 'projects/07/MemoryAccess/StaticTest/StaticTest.vm'
+    # fp = 'projects/07/MemoryAccess/BasicTest/BasicTest.vm'
+    fp = 'projects/07/MemoryAccess/PointerTest/PointerTest.vm'
+    import sys
+    fp = sys.argv[1]
     Main(fp)
     # p = Parser(fp)
     # print(p.lines)
